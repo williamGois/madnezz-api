@@ -1,0 +1,1122 @@
+{
+    "openapi": "3.0.0",
+    "info": {
+        "title": "Madnezz API",
+        "description": "API for Madnezz application",
+        "contact": {
+            "name": "API Support",
+            "email": "support@madnezz.com"
+        },
+        "version": "1.0.0"
+    },
+    "servers": [
+        {
+            "url": "http://localhost:9000/api",
+            "description": "Local Development Server"
+        }
+    ],
+    "paths": {
+        "/v1/auth/register": {
+            "post": {
+                "tags": [
+                    "Authentication"
+                ],
+                "summary": "Register a new user",
+                "operationId": "58fb87dce972174198f99707c002431d",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "name",
+                                    "email",
+                                    "password",
+                                    "password_confirmation"
+                                ],
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "example": "John Doe"
+                                    },
+                                    "email": {
+                                        "type": "string",
+                                        "format": "email",
+                                        "example": "john@example.com"
+                                    },
+                                    "password": {
+                                        "type": "string",
+                                        "format": "password",
+                                        "example": "password123"
+                                    },
+                                    "password_confirmation": {
+                                        "type": "string",
+                                        "format": "password",
+                                        "example": "password123"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "User registered successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "User registered successfully"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "user": {
+                                                    "type": "object"
+                                                },
+                                                "access_token": {
+                                                    "type": "string"
+                                                },
+                                                "token_type": {
+                                                    "type": "string",
+                                                    "example": "bearer"
+                                                },
+                                                "expires_in": {
+                                                    "type": "integer",
+                                                    "example": 3600
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                }
+            }
+        },
+        "/v1/auth/login": {
+            "post": {
+                "tags": [
+                    "Authentication"
+                ],
+                "summary": "Login user",
+                "operationId": "3ff5fdf1e87b064055e72ef143ecc7c5",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "email",
+                                    "password"
+                                ],
+                                "properties": {
+                                    "email": {
+                                        "type": "string",
+                                        "format": "email",
+                                        "example": "john@example.com"
+                                    },
+                                    "password": {
+                                        "type": "string",
+                                        "format": "password",
+                                        "example": "password123"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Login successful",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Login successful"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "user": {
+                                                    "type": "object"
+                                                },
+                                                "access_token": {
+                                                    "type": "string"
+                                                },
+                                                "token_type": {
+                                                    "type": "string",
+                                                    "example": "bearer"
+                                                },
+                                                "expires_in": {
+                                                    "type": "integer",
+                                                    "example": 3600
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Invalid credentials"
+                    }
+                }
+            }
+        },
+        "/v1/auth/logout": {
+            "post": {
+                "tags": [
+                    "Authentication"
+                ],
+                "summary": "Logout user",
+                "operationId": "5df06d8bf07ab28923f168580a1b2323",
+                "responses": {
+                    "200": {
+                        "description": "Logout successful",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Logout successful"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/v1/auth/refresh": {
+            "post": {
+                "tags": [
+                    "Authentication"
+                ],
+                "summary": "Refresh JWT token",
+                "operationId": "9b72c101d51d10fc133ca61da1a4a648",
+                "responses": {
+                    "200": {
+                        "description": "Token refreshed successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Token refreshed successfully"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "user": {
+                                                    "type": "object"
+                                                },
+                                                "access_token": {
+                                                    "type": "string"
+                                                },
+                                                "token_type": {
+                                                    "type": "string",
+                                                    "example": "bearer"
+                                                },
+                                                "expires_in": {
+                                                    "type": "integer",
+                                                    "example": 3600
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/v1/auth/me": {
+            "get": {
+                "tags": [
+                    "Authentication"
+                ],
+                "summary": "Get current user",
+                "operationId": "43b10aadfac909e8840e7bd830e76590",
+                "responses": {
+                    "200": {
+                        "description": "User retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "User retrieved successfully"
+                                        },
+                                        "data": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/v1/auth/profile": {
+            "put": {
+                "tags": [
+                    "Authentication"
+                ],
+                "summary": "Update user profile",
+                "operationId": "00f5e5063b14edc502983c5e3b1b84d8",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "example": "Jane Doe"
+                                    },
+                                    "email": {
+                                        "type": "string",
+                                        "format": "email",
+                                        "example": "jane@example.com"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Profile updated successfully"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/v1/auth/change-password": {
+            "post": {
+                "tags": [
+                    "Authentication"
+                ],
+                "summary": "Change user password",
+                "operationId": "760c4dd649312da7f1f8576aba9621c2",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "current_password",
+                                    "new_password",
+                                    "new_password_confirmation"
+                                ],
+                                "properties": {
+                                    "current_password": {
+                                        "type": "string",
+                                        "format": "password"
+                                    },
+                                    "new_password": {
+                                        "type": "string",
+                                        "format": "password"
+                                    },
+                                    "new_password_confirmation": {
+                                        "type": "string",
+                                        "format": "password"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Password changed successfully"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/v1/organization/context": {
+            "get": {
+                "tags": [
+                    "Contexto Organizacional"
+                ],
+                "summary": "Obter contexto organizacional do usuário atual",
+                "description": "Recupera o contexto organizacional do usuário autenticado incluindo posição, unidade e informações de departamento",
+                "operationId": "a7d0607182c6665743b43cc55bbff620",
+                "responses": {
+                    "200": {
+                        "description": "Contexto organizacional recuperado com sucesso",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "organization_id": {
+                                                    "type": "string",
+                                                    "format": "uuid",
+                                                    "example": "612b29b1-06a4-4885-ab98-de099feb6ecd"
+                                                },
+                                                "organization_name": {
+                                                    "type": "string",
+                                                    "example": "Madnezz Corporation"
+                                                },
+                                                "organization_code": {
+                                                    "type": "string",
+                                                    "example": "MADNEZZ"
+                                                },
+                                                "position_level": {
+                                                    "type": "string",
+                                                    "enum": [
+                                                        "go",
+                                                        "gr",
+                                                        "store_manager"
+                                                    ],
+                                                    "example": "go"
+                                                },
+                                                "organization_unit_id": {
+                                                    "type": "string",
+                                                    "format": "uuid",
+                                                    "example": "e1acb852-4489-43d3-847f-ec027d016ccf"
+                                                },
+                                                "organization_unit_name": {
+                                                    "type": "string",
+                                                    "example": "Madnezz Corporation"
+                                                },
+                                                "organization_unit_type": {
+                                                    "type": "string",
+                                                    "enum": [
+                                                        "company",
+                                                        "regional",
+                                                        "store"
+                                                    ],
+                                                    "example": "company"
+                                                },
+                                                "departments": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "string",
+                                                        "enum": [
+                                                            "administrative",
+                                                            "financial",
+                                                            "marketing",
+                                                            "operations",
+                                                            "trade",
+                                                            "macro"
+                                                        ]
+                                                    },
+                                                    "example": [
+                                                        "administrative",
+                                                        "financial",
+                                                        "marketing",
+                                                        "operations",
+                                                        "trade",
+                                                        "macro"
+                                                    ]
+                                                },
+                                                "position_id": {
+                                                    "type": "string",
+                                                    "format": "uuid",
+                                                    "example": "a9da6ad7-8cf2-4f0a-a31a-b5ff49c39c8c"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Usuário não autenticado",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Usuário não autenticado"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Usuário não possui posição ativa em nenhuma organização",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Usuário não possui posição ativa em nenhuma organização"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/v1/organization/dashboard": {
+            "get": {
+                "tags": [
+                    "Acesso Hierárquico - Nível GO"
+                ],
+                "summary": "Acessar dashboard organizacional nível GO",
+                "description": "Dashboard organizacional acessível apenas por usuários nível GO (Diretor)",
+                "operationId": "e4d363a6abbc1ad1408ad7b05926b7f6",
+                "responses": {
+                    "200": {
+                        "description": "Dashboard GO acessado com sucesso",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Dashboard GO - visão geral da organização"
+                                        },
+                                        "context": {
+                                            "description": "Contexto organizacional do usuário",
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Nível hierárquico insuficiente",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Nível hierárquico insuficiente. Necessário: go"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/v1/regional/dashboard": {
+            "get": {
+                "tags": [
+                    "Acesso Hierárquico - Nível GR"
+                ],
+                "summary": "Acessar dashboard regional nível GR",
+                "description": "Dashboard regional acessível por usuários nível GR (Gerente Regional) e superiores",
+                "operationId": "35b5301b4c6ecfbb8abfa194c53a956a",
+                "responses": {
+                    "200": {
+                        "description": "Dashboard regional acessado com sucesso",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Dashboard regional - visão geral da região"
+                                        },
+                                        "context": {
+                                            "description": "Contexto organizacional do usuário",
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Nível hierárquico insuficiente",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Nível hierárquico insuficiente. Necessário: gr"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/v1/store/dashboard": {
+            "get": {
+                "tags": [
+                    "Acesso Hierárquico - Nível Loja"
+                ],
+                "summary": "Acessar dashboard da loja",
+                "description": "Dashboard da loja acessível por todos os níveis hierárquicos (Gerente de Loja e superiores)",
+                "operationId": "25940bb51f92e9916d289bf5b1edfa73",
+                "responses": {
+                    "200": {
+                        "description": "Dashboard da loja acessado com sucesso",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Dashboard da loja - dados específicos da loja"
+                                        },
+                                        "context": {
+                                            "description": "Contexto organizacional do usuário",
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Nível hierárquico insuficiente",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Nível hierárquico insuficiente. Necessário: store_manager"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/v1/reports/administrative": {
+            "get": {
+                "tags": [
+                    "Acesso por Departamento"
+                ],
+                "summary": "Acessar relatórios do departamento administrativo",
+                "description": "Relatórios acessíveis para usuários com acesso ao departamento administrativo",
+                "operationId": "6b758455729da4c1de0f435383114c56",
+                "responses": {
+                    "200": {
+                        "description": "Relatórios administrativos acessados com sucesso",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Relatórios do departamento administrativo"
+                                        },
+                                        "department": {
+                                            "type": "string",
+                                            "example": "administrative"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Acesso negado ao departamento",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Acesso negado. Departamento necessário: administrative"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/v1/reports/financial": {
+            "get": {
+                "tags": [
+                    "Acesso por Departamento"
+                ],
+                "summary": "Acessar relatórios do departamento financeiro",
+                "description": "Relatórios acessíveis para usuários com acesso ao departamento financeiro",
+                "operationId": "2f6d6bd05ecfa56d3a7e5c404a21e387",
+                "responses": {
+                    "200": {
+                        "description": "Relatórios financeiros acessados com sucesso",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Relatórios do departamento financeiro"
+                                        },
+                                        "department": {
+                                            "type": "string",
+                                            "example": "financial"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Acesso negado ao departamento",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Acesso negado. Departamento necessário: financial"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/v1/store/{store_id}/details": {
+            "get": {
+                "tags": [
+                    "Acesso Específico a Recursos"
+                ],
+                "summary": "Obter detalhes de loja específica",
+                "description": "Acessa detalhes de uma loja específica. O acesso é automaticamente validado com base na posição hierárquica do usuário",
+                "operationId": "40687b2e8d2d4f7c732db1a7df30f9d9",
+                "parameters": [
+                    {
+                        "name": "store_id",
+                        "in": "path",
+                        "description": "UUID da loja",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid",
+                            "example": "488f1116-41ce-4976-9b6f-90ccaf68bede"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Detalhes da loja recuperados com sucesso",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Detalhes da loja: 488f1116-41ce-4976-9b6f-90ccaf68bede"
+                                        },
+                                        "store_id": {
+                                            "type": "string",
+                                            "format": "uuid",
+                                            "example": "488f1116-41ce-4976-9b6f-90ccaf68bede"
+                                        },
+                                        "context": {
+                                            "description": "Contexto organizacional do usuário",
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Acesso negado a esta loja",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Acesso negado a esta loja"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/v1/unit/{unit_id}/details": {
+            "get": {
+                "tags": [
+                    "Acesso Específico a Recursos"
+                ],
+                "summary": "Obter detalhes de unidade organizacional específica",
+                "description": "Acessa detalhes de uma unidade organizacional específica. O acesso é automaticamente validado com base na posição hierárquica do usuário",
+                "operationId": "71b84e0676832fde0e4716bcd20f38e6",
+                "parameters": [
+                    {
+                        "name": "unit_id",
+                        "in": "path",
+                        "description": "UUID da unidade organizacional",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid",
+                            "example": "7d777412-9585-4a83-ab04-ebd28aae725e"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Detalhes da unidade recuperados com sucesso",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Detalhes da unidade: 7d777412-9585-4a83-ab04-ebd28aae725e"
+                                        },
+                                        "unit_id": {
+                                            "type": "string",
+                                            "format": "uuid",
+                                            "example": "7d777412-9585-4a83-ab04-ebd28aae725e"
+                                        },
+                                        "context": {
+                                            "description": "Contexto organizacional do usuário",
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Acesso negado a esta unidade organizacional",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Acesso negado a esta unidade organizacional"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/v1/campaigns/regional": {
+            "get": {
+                "tags": [
+                    "Controle de Acesso Combinado"
+                ],
+                "summary": "Acessar campanhas de marketing regionais",
+                "description": "Campanhas de marketing acessíveis para usuários nível GR e superiores com acesso ao departamento de Marketing",
+                "operationId": "5bdba6140095685d4d7aa317f5dedd44",
+                "responses": {
+                    "200": {
+                        "description": "Campanhas regionais acessadas com sucesso",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Campanhas de marketing regionais (GR+ com depto Marketing)"
+                                        },
+                                        "access": {
+                                            "type": "string",
+                                            "example": "Nível GR ou GO com acesso ao departamento de Marketing"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Acesso insuficiente - requer nível GR+ e departamento Marketing",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Nível hierárquico insuficiente. Necessário: gr"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        }
+    },
+    "components": {
+        "securitySchemes": {
+            "bearerAuth": {
+                "type": "http",
+                "bearerFormat": "JWT",
+                "scheme": "bearer"
+            }
+        }
+    },
+    "tags": [
+        {
+            "name": "Controle de Acesso Combinado",
+            "description": "Endpoints que requerem tanto nível hierárquico quanto acesso por departamento"
+        },
+        {
+            "name": "Authentication",
+            "description": "Authentication endpoints"
+        },
+        {
+            "name": "Contexto Organizacional",
+            "description": "Contexto Organizacional"
+        },
+        {
+            "name": "Acesso Hierárquico - Nível GO",
+            "description": "Acesso Hierárquico - Nível GO"
+        },
+        {
+            "name": "Acesso Hierárquico - Nível GR",
+            "description": "Acesso Hierárquico - Nível GR"
+        },
+        {
+            "name": "Acesso Hierárquico - Nível Loja",
+            "description": "Acesso Hierárquico - Nível Loja"
+        },
+        {
+            "name": "Acesso por Departamento",
+            "description": "Acesso por Departamento"
+        },
+        {
+            "name": "Acesso Específico a Recursos",
+            "description": "Acesso Específico a Recursos"
+        }
+    ]
+}

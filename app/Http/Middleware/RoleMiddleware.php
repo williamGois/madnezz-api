@@ -17,7 +17,10 @@ class RoleMiddleware
             ], Response::HTTP_UNAUTHORIZED);
         }
 
-        if (!$request->user()->hasAnyRole($roles)) {
+        // Check hierarchy role for MASTER, GO, GR, etc.
+        $userRole = $request->user()->hierarchy_role ?? null;
+        
+        if (!in_array($userRole, $roles)) {
             return response()->json([
                 'success' => false,
                 'message' => 'Insufficient permissions'

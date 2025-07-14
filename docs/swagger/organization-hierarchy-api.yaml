@@ -1,0 +1,526 @@
+openapi: 3.0.0
+info:
+  title: Madnezz Organization Hierarchy API
+  description: API for managing multi-organization hierarchy with MASTER, GO, GR, and Store Manager roles
+  version: 1.0.0
+  
+servers:
+  - url: http://localhost:8000/api/v1
+    description: Local development server
+
+security:
+  - bearerAuth: []
+
+paths:
+  /organizations:
+    get:
+      tags:
+        - Organizations
+      summary: List all organizations (MASTER only)
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: List of organizations
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      organizations:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Organization'
+                      total:
+                        type: integer
+        '403':
+          $ref: '#/components/responses/Forbidden'
+    
+    post:
+      tags:
+        - Organizations
+      summary: Create a new organization (MASTER only)
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+                - code
+              properties:
+                name:
+                  type: string
+                  example: "Acme Corporation"
+                code:
+                  type: string
+                  example: "ACME"
+                go_user:
+                  type: object
+                  properties:
+                    name:
+                      type: string
+                    email:
+                      type: string
+                      format: email
+                    password:
+                      type: string
+                      format: password
+                    phone:
+                      type: string
+      responses:
+        '201':
+          description: Organization created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      organization:
+                        $ref: '#/components/schemas/Organization'
+                      go_user_id:
+                        type: string
+                        format: uuid
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /organizations/{org_id}:
+    patch:
+      tags:
+        - Organizations
+      summary: Update organization details (MASTER only)
+      parameters:
+        - name: org_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                code:
+                  type: string
+      responses:
+        '200':
+          description: Organization updated
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /organizations/{org_id}/status:
+    patch:
+      tags:
+        - Organizations
+      summary: Update organization status (MASTER only)
+      parameters:
+        - name: org_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - active
+              properties:
+                active:
+                  type: boolean
+      responses:
+        '200':
+          description: Status updated
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /organizations/{org_id}/regions:
+    get:
+      tags:
+        - Regions
+      summary: List regions in an organization
+      parameters:
+        - name: org_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: List of regions
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      regions:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Region'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+    
+    post:
+      tags:
+        - Regions
+      summary: Create a new region (GO or MASTER)
+      parameters:
+        - name: org_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+                - code
+              properties:
+                name:
+                  type: string
+                  example: "Região Sul"
+                code:
+                  type: string
+                  example: "RS"
+      responses:
+        '201':
+          description: Region created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      region:
+                        $ref: '#/components/schemas/Region'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /organizations/{org_id}/regions/{region_id}/gr:
+    post:
+      tags:
+        - Regions
+      summary: Create a Regional Manager (GO or MASTER)
+      parameters:
+        - name: org_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: region_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+                - email
+                - password
+              properties:
+                name:
+                  type: string
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+                  format: password
+                phone:
+                  type: string
+      responses:
+        '201':
+          description: Regional Manager created
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /organizations/{org_id}/stores:
+    post:
+      tags:
+        - Stores
+      summary: Create a new store (GO or MASTER)
+      parameters:
+        - name: org_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - region_id
+                - name
+                - code
+                - address
+                - city
+                - state
+                - zip_code
+              properties:
+                region_id:
+                  type: string
+                  format: uuid
+                name:
+                  type: string
+                code:
+                  type: string
+                address:
+                  type: string
+                city:
+                  type: string
+                state:
+                  type: string
+                  maxLength: 2
+                zip_code:
+                  type: string
+                phone:
+                  type: string
+                manager:
+                  type: object
+                  properties:
+                    name:
+                      type: string
+                    email:
+                      type: string
+                      format: email
+                    password:
+                      type: string
+                      format: password
+                    phone:
+                      type: string
+      responses:
+        '201':
+          description: Store created
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /organizations/{org_id}/regions/{region_id}/stores:
+    get:
+      tags:
+        - Stores
+      summary: List stores in a region
+      parameters:
+        - name: org_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: region_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: List of stores
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      region:
+                        $ref: '#/components/schemas/Region'
+                      stores:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Store'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    Organization:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        code:
+          type: string
+        active:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    Region:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        code:
+          type: string
+        organization_id:
+          type: string
+          format: uuid
+        active:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+
+    Store:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        code:
+          type: string
+        address:
+          type: string
+        city:
+          type: string
+        state:
+          type: string
+        zip_code:
+          type: string
+        phone:
+          type: string
+          nullable: true
+        manager_id:
+          type: string
+          format: uuid
+          nullable: true
+        active:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        email:
+          type: string
+          format: email
+        hierarchy_role:
+          type: string
+          enum: [MASTER, GO, GR, STORE_MANAGER]
+        organization_id:
+          type: string
+          format: uuid
+          nullable: true
+        store_id:
+          type: string
+          format: uuid
+          nullable: true
+        permissions:
+          type: array
+          items:
+            type: string
+
+  responses:
+    Forbidden:
+      description: Access denied
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              success:
+                type: boolean
+                example: false
+              message:
+                type: string
+                example: "Access denied"
+    
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              success:
+                type: boolean
+                example: false
+              message:
+                type: string
+                example: "Resource not found"
+
+tags:
+  - name: Organizations
+    description: Organization management (MASTER only)
+  - name: Regions
+    description: Regional unit management
+  - name: Stores
+    description: Store management
+  - name: Users
+    description: User hierarchy management

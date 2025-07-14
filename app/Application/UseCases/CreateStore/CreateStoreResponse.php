@@ -11,7 +11,8 @@ class CreateStoreResponse
         private readonly string $name,
         private readonly string $code,
         private readonly string $organizationId,
-        private readonly ?string $managerUserId = null
+        private readonly ?string $managerUserId = null,
+        private readonly ?string $storeUnitId = null
     ) {}
 
     public function getStoreId(): string
@@ -39,6 +40,11 @@ class CreateStoreResponse
         return $this->managerUserId;
     }
 
+    public function getStoreUnitId(): ?string
+    {
+        return $this->storeUnitId;
+    }
+
     public function toArray(): array
     {
         return [
@@ -47,6 +53,7 @@ class CreateStoreResponse
             'code' => $this->code,
             'organization_id' => $this->organizationId,
             'manager_user_id' => $this->managerUserId,
+            'store_unit_id' => $this->storeUnitId,
         ];
     }
 }

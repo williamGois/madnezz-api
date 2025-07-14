@@ -54,4 +54,9 @@ class EloquentOrganizationRepository implements OrganizationRepositoryInterface
         
         return $models->map(fn(OrganizationModel $model) => OrganizationMapper::toDomain($model))->toArray();
     }
+    
+    public function codeExists(string $code): bool
+    {
+        return OrganizationModel::where('code', $code)->exists();
+    }
 }

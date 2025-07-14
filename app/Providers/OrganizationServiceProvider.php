@@ -14,6 +14,9 @@ use App\Infrastructure\Organization\Repositories\EloquentOrganizationRepository;
 use App\Infrastructure\Organization\Repositories\EloquentOrganizationUnitRepository;
 use App\Infrastructure\Organization\Repositories\EloquentPositionRepository;
 use App\Infrastructure\Organization\Repositories\EloquentStoreRepository;
+use App\Application\UseCases\CreateOrganization\CreateOrganizationUseCase;
+use App\Application\Organization\UseCases\CreateRegion\CreateRegionUseCase;
+use App\Application\UseCases\CreateStore\CreateStoreUseCase;
 use Illuminate\Support\ServiceProvider;
 
 class OrganizationServiceProvider extends ServiceProvider
@@ -28,6 +31,11 @@ class OrganizationServiceProvider extends ServiceProvider
         
         $this->app->singleton(HierarchyPermissionService::class);
         $this->app->singleton(AccessControlService::class);
+        
+        // Use Cases
+        $this->app->singleton(CreateOrganizationUseCase::class);
+        $this->app->singleton(CreateRegionUseCase::class);
+        $this->app->singleton(CreateStoreUseCase::class);
     }
 
     public function boot(): void

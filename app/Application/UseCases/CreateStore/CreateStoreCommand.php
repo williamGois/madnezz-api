@@ -6,12 +6,14 @@ namespace App\Application\UseCases\CreateStore;
 
 use App\Domain\User\ValueObjects\UserId;
 use App\Domain\Organization\ValueObjects\OrganizationId;
+use App\Domain\Organization\ValueObjects\OrganizationUnitId;
 
 class CreateStoreCommand
 {
     public function __construct(
         private readonly UserId $requestingUserId,
         private readonly OrganizationId $organizationId,
+        private readonly OrganizationUnitId $regionId,
         private readonly string $name,
         private readonly string $code,
         private readonly string $address,
@@ -30,6 +32,11 @@ class CreateStoreCommand
     public function getOrganizationId(): OrganizationId
     {
         return $this->organizationId;
+    }
+
+    public function getRegionId(): OrganizationUnitId
+    {
+        return $this->regionId;
     }
 
     public function getName(): string

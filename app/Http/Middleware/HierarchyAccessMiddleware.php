@@ -19,15 +19,23 @@ class HierarchyAccessMiddleware
             ], 500);
         }
 
+        // MASTER has access to everything
+        if (isset($context['is_master']) && $context['is_master']) {
+            return $next($request);
+        }
+
         // Check hierarchy level requirement
         if ($requiredLevel) {
             $levelHierarchy = [
+                'master' => 0,
                 'go' => 1,
                 'gr' => 2,  
                 'store_manager' => 3,
             ];
 
-            $userLevel = $levelHierarchy[$context['position_level']] ?? 999;
+            // Use hierarchy_role from context instead of position_level
+            $userRole = strtolower($context['hierarchy_role'] ?? '');
+            $userLevel = $levelHierarchy[$userRole] ?? 999;
             $requiredLevelNum = $levelHierarchy[$requiredLevel] ?? 999;
 
             if ($userLevel > $requiredLevelNum) {
@@ -40,7 +48,9 @@ class HierarchyAccessMiddleware
 
         // Check department requirement
         if ($requiredDepartment) {
-            if (!in_array($requiredDepartment, $context['departments'], true)) {
+            // Check if user has the required department in their department codes
+            $userDepartments = $context['department_codes'] ?? $context['departments'] ?? [];
+            if (!in_array($requiredDepartment, $userDepartments, true)) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Acesso negado. Departamento necessário: ' . $requiredDepartment,
@@ -72,20 +82,45 @@ class HierarchyAccessMiddleware
 
     private function canAccessStore(array $context, string $storeId): bool
     {
-        // GO can access all stores
-        if ($context['position_level'] === 'go') {
+        // MASTER can access everything
+        if (isset($context['is_master']) && $context['is_master']) {
+            return true;
+        }
+
+        $userRole = strtolower($context['hierarchy_role'] ?? '');
+
+        // GO can access all stores in their organization
+        if ($userRole === 'go') {
             return true;
         }
 
         // GR can access stores under their regional unit
-        if ($context['position_level'] === 'gr') {
-            $store = DB::table('organization_units')
+        if ($userRole === 'gr') {
+            // First check if it's a Store model ID
+            $store = DB::table('stores')
+                ->where('id', $storeId)
+                ->where('organization_id', $context['organization_id'])
+                ->first();
+
+            if ($store) {
+                // Find the store's organization unit
+                $storeUnit = DB::table('organization_units')
+                    ->where('organization_id', $context['organization_id'])
+                    ->where('code', $store->code)
+                    ->where('type', 'store')
+                    ->first();
+                
+                return $storeUnit && $storeUnit->parent_id === $context['organization_unit_id'];
+            }
+
+            // If not found as Store, check as organization unit
+            $storeUnit = DB::table('organization_units')
                 ->where('id', $storeId)
                 ->where('type', 'store')
                 ->where('active', true)
                 ->first();
 
-            if (!$store) {
+            if (!$storeUnit) {
                 return false;
             }
 
@@ -94,8 +129,8 @@ class HierarchyAccessMiddleware
         }
 
         // Store managers can only access their own store
-        if ($context['position_level'] === 'store_manager') {
-            return $context['organization_unit_id'] === $storeId;
+        if ($userRole === 'store_manager') {
+            return isset($context['store_id']) && $context['store_id'] === $storeId;
         }
 
         return false;
@@ -103,19 +138,30 @@ class HierarchyAccessMiddleware
 
     private function canAccessOrganizationUnit(array $context, string $unitId): bool
     {
-        // GO can access all units
-        if ($context['position_level'] === 'go') {
+        // MASTER can access everything
+        if (isset($context['is_master']) && $context['is_master']) {
+            return true;
+        }
+
+        $userRole = strtolower($context['hierarchy_role'] ?? '');
+
+        // GO can access all units in their organization
+        if ($userRole === 'go') {
             return true;
         }
 
         // GR can access their unit and child units
-        if ($context['position_level'] === 'gr') {
+        if ($userRole === 'gr') {
             return $context['organization_unit_id'] === $unitId || 
                    $this->isChildUnit($context['organization_unit_id'], $unitId);
         }
 
         // Store managers can only access their own unit
-        return $context['organization_unit_id'] === $unitId;
+        if ($userRole === 'store_manager') {
+            return $context['organization_unit_id'] === $unitId;
+        }
+
+        return false;
     }
 
     private function isChildUnit(string $parentId, string $childId): bool

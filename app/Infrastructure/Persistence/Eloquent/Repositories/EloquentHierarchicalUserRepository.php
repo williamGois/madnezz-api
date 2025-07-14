@@ -13,11 +13,18 @@ use App\Domain\Organization\ValueObjects\StoreId;
 use App\Domain\Shared\ValueObjects\Email;
 use App\Infrastructure\Persistence\Eloquent\Models\UserModel;
 use App\Infrastructure\Persistence\Mappers\HierarchicalUserMapper;
+use App\Infrastructure\Traits\AppliesOrganizationContext;
 
 class EloquentHierarchicalUserRepository implements HierarchicalUserRepositoryInterface
 {
+    use AppliesOrganizationContext;
     public function findById(UserId $id): ?HierarchicalUser
     {
+        // Check access permission first
+        if (!$this->canAccessResource('user', $id->toString())) {
+            return null;
+        }
+        
         $model = UserModel::find($id->toString());
         
         return $model ? HierarchicalUserMapper::toDomain($model) : null;
@@ -32,14 +39,24 @@ class EloquentHierarchicalUserRepository implements HierarchicalUserRepositoryIn
 
     public function findByHierarchyRole(HierarchyRole $role): array
     {
-        $models = UserModel::where('hierarchy_role', $role->getValue())->get();
+        $query = UserModel::where('hierarchy_role', $role->getValue());
+        
+        // Apply user context filter
+        $query = $this->applyUserContext($query, 'users_ddd');
+        
+        $models = $query->get();
         
         return $models->map(fn(UserModel $model) => HierarchicalUserMapper::toDomain($model))->toArray();
     }
 
     public function findByOrganizationId(OrganizationId $organizationId): array
     {
-        $models = UserModel::where('organization_id', $organizationId->toString())->get();
+        $query = UserModel::where('organization_id', $organizationId->toString());
+        
+        // Apply user context filter
+        $query = $this->applyUserContext($query, 'users_ddd');
+        
+        $models = $query->get();
         
         return $models->map(fn(UserModel $model) => HierarchicalUserMapper::toDomain($model))->toArray();
     }

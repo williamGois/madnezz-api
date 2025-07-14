@@ -18,5 +18,7 @@ interface DepartmentRepositoryInterface
     
     public function findByType(OrganizationId $organizationId, string $type): ?Department;
     
+    public function findByCode(OrganizationId $organizationId, string $code): ?Department;
+    
     public function delete(DepartmentId $id): void;
 }

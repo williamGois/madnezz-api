@@ -48,6 +48,16 @@ class EloquentDepartmentRepository implements DepartmentRepositoryInterface
         
         return $model ? DepartmentMapper::toDomain($model) : null;
     }
+    
+    public function findByCode(OrganizationId $organizationId, string $code): ?Department
+    {
+        $model = DepartmentModel::where('organization_id', $organizationId->getValue())
+            ->where('code', $code)
+            ->where('active', true)
+            ->first();
+        
+        return $model ? DepartmentMapper::toDomain($model) : null;
+    }
 
     public function delete(DepartmentId $id): void
     {

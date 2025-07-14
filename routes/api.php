@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\V1\OrganizationController;
 use App\Http\Controllers\Api\V1\UserController;
 use App\Http\Controllers\Api\V1\MasterController;
 use App\Http\Controllers\Api\V1\TaskController;
+use App\Http\Controllers\Api\V1\RegionController;
 use App\Http\Controllers\Api\HierarchyController;
 use App\Http\Controllers\Api\UserController as ApiUserController;
 use App\Http\Controllers\Api\EnterpriseController;
@@ -56,6 +57,23 @@ Route::prefix('v1')->group(function () {
             Route::get('/organizations', [MasterController::class, 'listOrganizations']);
             Route::get('/stores', [MasterController::class, 'listStores']);
         });
+        
+        // Organization management (MASTER only)
+        Route::middleware('role:MASTER')->group(function () {
+            Route::get('/organizations', [\App\Http\Controllers\Api\V1\OrganizationManagementController::class, 'index']);
+            Route::post('/organizations', [\App\Http\Controllers\Api\V1\OrganizationManagementController::class, 'store']);
+            Route::patch('/organizations/{id}', [\App\Http\Controllers\Api\V1\OrganizationManagementController::class, 'update']);
+            Route::patch('/organizations/{id}/status', [\App\Http\Controllers\Api\V1\OrganizationManagementController::class, 'updateStatus']);
+        });
+        
+        // Region management (GO or MASTER)
+        Route::post('/organizations/{org_id}/regions', [RegionController::class, 'store']);
+        Route::get('/organizations/{org_id}/regions', [RegionController::class, 'index']);
+        Route::post('/organizations/{org_id}/regions/{region_id}/gr', [RegionController::class, 'createRegionalManager']);
+        
+        // Store management (GO or MASTER)
+        Route::post('/organizations/{org_id}/stores', [\App\Http\Controllers\Api\V1\StoreManagementController::class, 'store']);
+        Route::get('/organizations/{org_id}/regions/{region_id}/stores', [\App\Http\Controllers\Api\V1\StoreManagementController::class, 'listByRegion']);
     });
     
     // MASTER routes with organization context

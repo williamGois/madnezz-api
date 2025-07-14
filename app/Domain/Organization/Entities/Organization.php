@@ -80,6 +80,12 @@ class Organization
         $this->updatedAt = new DateTimeImmutable();
     }
 
+    public function updateCode(string $code): void
+    {
+        $this->code = $code;
+        $this->updatedAt = new DateTimeImmutable();
+    }
+
     public function activate(): void
     {
         $this->active = true;

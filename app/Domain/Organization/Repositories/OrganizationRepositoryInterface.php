@@ -20,4 +20,6 @@ interface OrganizationRepositoryInterface
     public function delete(OrganizationId $id): void;
     
     public function findAll(): array;
+    
+    public function codeExists(string $code): bool;
 }

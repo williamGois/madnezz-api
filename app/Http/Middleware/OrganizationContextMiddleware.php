@@ -87,12 +87,48 @@ class OrganizationContextMiddleware
             ->join('departments as d', 'd.id', '=', 'pd.department_id')
             ->where('pd.position_id', $position->id)
             ->where('d.active', true)
-            ->pluck('d.type')
+            ->select('d.id', 'd.name', 'd.code', 'd.type')
+            ->get()
             ->toArray();
+
+        // Get department codes and types for easier access
+        $departmentCodes = array_map(fn($d) => $d->code, $departments);
+        $departmentTypes = array_unique(array_map(fn($d) => $d->type, $departments));
+
+        // Get parent units hierarchy (for GR and Store Manager context)
+        $parentUnits = [];
+        $currentUnit = $organizationUnit;
+        while ($currentUnit->parent_id) {
+            $parentUnit = DB::table('organization_units')
+                ->where('id', $currentUnit->parent_id)
+                ->first();
+            if ($parentUnit) {
+                $parentUnits[] = [
+                    'id' => $parentUnit->id,
+                    'name' => $parentUnit->name,
+                    'type' => $parentUnit->type,
+                ];
+                $currentUnit = $parentUnit;
+            } else {
+                break;
+            }
+        }
+
+        // Determine user's store_id if they are a Store Manager
+        $storeId = null;
+        if ($user->hierarchy_role === 'STORE_MANAGER' && $organizationUnit->type === 'store') {
+            $store = DB::table('stores')
+                ->where('organization_id', $organization->id)
+                ->where('code', $organizationUnit->code)
+                ->first();
+            $storeId = $store ? $store->id : null;
+        }
 
         // Add organization context to request
         $request->merge([
             'organization_context' => [
+                'user_id' => $user->id,
+                'hierarchy_role' => $user->hierarchy_role,
                 'organization_id' => $organization->id,
                 'organization_name' => $organization->name,
                 'organization_code' => $organization->code,
@@ -100,8 +136,15 @@ class OrganizationContextMiddleware
                 'organization_unit_id' => $organizationUnit->id,
                 'organization_unit_name' => $organizationUnit->name,
                 'organization_unit_type' => $organizationUnit->type,
+                'organization_unit_code' => $organizationUnit->code,
+                'parent_units' => $parentUnits,
                 'departments' => $departments,
+                'department_codes' => $departmentCodes,
+                'department_types' => $departmentTypes,
                 'position_id' => $position->id,
+                'store_id' => $storeId,
+                'permissions' => $user->permissions ?? [],
+                'context_data' => $user->context_data,
             ]
         ]);
 

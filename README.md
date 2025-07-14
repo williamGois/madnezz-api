@@ -39,7 +39,53 @@ docker-compose exec app php artisan migrate
 - `PUT /api/v1/profile` - Update profile
 - `POST /api/v1/change-password` - Change password
 
+### Task Management (Kanban)
+- `GET /api/v1/tasks/kanban` - Get store-based Kanban board
+- `GET /api/v1/tasks` - List tasks with filters
+- `POST /api/v1/tasks` - Create new task
+- `PUT /api/v1/tasks/{id}` - Update task
+- `DELETE /api/v1/tasks/{id}` - Delete task
+
 ### Services
 - **API**: http://localhost:8080
 - **PostgreSQL**: localhost:5432
 - **Redis**: localhost:6379
+
+## 🏪 Store-Based Kanban Board
+
+The Kanban board displays tasks organized by store, providing better visibility across locations:
+
+### Middleware Stack
+1. **VisibleStoresMiddleware** - Determines which stores the user can see based on hierarchy role
+2. **CacheKanbanMiddleware** - Caches responses for improved performance
+
+### Response Format
+```json
+{
+    "success": true,
+    "data": {
+        "board": [
+            {
+                "store_id": "uuid",
+                "store_name": "Store Name",
+                "store_code": "STORE001",
+                "tasks": [...],
+                "counts": {
+                    "TODO": 5,
+                    "IN_PROGRESS": 3,
+                    "IN_REVIEW": 2,
+                    "BLOCKED": 1,
+                    "DONE": 10
+                }
+            }
+        ],
+        "total_stores": 1
+    }
+}
+```
+
+### Visibility Rules
+- **MASTER**: All stores across all organizations
+- **GO**: All stores in their organization
+- **GR**: All stores in their region
+- **Store Manager**: Only their assigned store

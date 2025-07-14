@@ -41,6 +41,99 @@ class HierarchyController extends Controller
     }
 
     /**
+     * Get the current user's hierarchy information
+     */
+    public function getMyHierarchy(Request $request): JsonResponse
+    {
+        try {
+            $user = Auth::user();
+            
+            // Get organization context from request (if available)
+            $orgContext = $request->get('organization_context');
+            
+            $myHierarchy = [
+                'user' => [
+                    'id' => $user->id,
+                    'name' => $user->name,
+                    'email' => $user->email,
+                    'hierarchy_role' => $user->hierarchy_role,
+                ],
+                'organization' => null,
+                'position' => null,
+                'hierarchy_path' => []
+            ];
+            
+            // Add organization details if available
+            if ($orgContext) {
+                $myHierarchy['organization'] = [
+                    'id' => $orgContext['organization_id'] ?? null,
+                    'name' => $orgContext['organization_name'] ?? null,
+                    'code' => $orgContext['organization_code'] ?? null,
+                ];
+                
+                $myHierarchy['position'] = [
+                    'id' => $orgContext['position_id'] ?? null,
+                    'level' => $orgContext['position_level'] ?? null,
+                    'unit_id' => $orgContext['organization_unit_id'] ?? null,
+                    'unit_name' => $orgContext['organization_unit_name'] ?? null,
+                    'unit_type' => $orgContext['organization_unit_type'] ?? null,
+                    'unit_code' => $orgContext['organization_unit_code'] ?? null,
+                ];
+                
+                // Build hierarchy path
+                $hierarchyPath = [];
+                
+                // Add organization
+                if ($orgContext['organization_name'] ?? null) {
+                    $hierarchyPath[] = [
+                        'level' => 'organization',
+                        'name' => $orgContext['organization_name'],
+                        'id' => $orgContext['organization_id']
+                    ];
+                }
+                
+                // Add parent units if available
+                if (isset($orgContext['parent_units']) && is_array($orgContext['parent_units'])) {
+                    foreach (array_reverse($orgContext['parent_units']) as $parent) {
+                        $hierarchyPath[] = [
+                            'level' => $parent['type'] ?? 'unit',
+                            'name' => $parent['name'] ?? '',
+                            'id' => $parent['id'] ?? null
+                        ];
+                    }
+                }
+                
+                // Add current unit
+                if ($orgContext['organization_unit_name'] ?? null) {
+                    $hierarchyPath[] = [
+                        'level' => $orgContext['organization_unit_type'] ?? 'unit',
+                        'name' => $orgContext['organization_unit_name'],
+                        'id' => $orgContext['organization_unit_id']
+                    ];
+                }
+                
+                $myHierarchy['hierarchy_path'] = $hierarchyPath;
+                
+                // Add departments
+                $myHierarchy['departments'] = $orgContext['departments'] ?? [];
+                
+                // Add permissions
+                $myHierarchy['permissions'] = $orgContext['permissions'] ?? [];
+            }
+            
+            return response()->json([
+                'success' => true,
+                'data' => $myHierarchy
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
      * Get detailed statistics for the dashboard
      */
     public function getStatistics(Request $request): JsonResponse

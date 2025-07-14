@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use App\Infrastructure\Persistence\Eloquent\Models\UserModel;
 use App\Infrastructure\Organization\Eloquent\OrganizationModel;
 use App\Infrastructure\Organization\Eloquent\OrganizationUnitModel;
+use App\Infrastructure\Organization\Eloquent\DepartmentModel;
 
 class TaskModel extends Model
 {
@@ -24,6 +25,7 @@ class TaskModel extends Model
         'created_by',
         'organization_id',
         'organization_unit_id',
+        'department_id',
         'parent_task_id',
         'due_date',
         'completed_at'
@@ -49,6 +51,11 @@ class TaskModel extends Model
     public function organizationUnit(): BelongsTo
     {
         return $this->belongsTo(OrganizationUnitModel::class, 'organization_unit_id');
+    }
+    
+    public function department(): BelongsTo
+    {
+        return $this->belongsTo(DepartmentModel::class, 'department_id');
     }
     
     public function parentTask(): BelongsTo

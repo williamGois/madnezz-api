@@ -10,6 +10,7 @@ use App\Domain\Task\ValueObjects\TaskStatus;
 use App\Domain\Task\ValueObjects\TaskPriority;
 use App\Domain\User\ValueObjects\UserId;
 use App\Infrastructure\Persistence\Eloquent\Models\UserModel;
+use Illuminate\Support\Facades\Cache;
 use DateTime;
 
 class UpdateTaskUseCase
@@ -83,6 +84,9 @@ class UpdateTaskUseCase
         }
         
         $this->taskRepository->save($task);
+        
+        // Invalidar cache após atualizar tarefa
+        Cache::tags(['tasks'])->flush();
         
         return [
             'id' => $task->getId()->getValue(),

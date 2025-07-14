@@ -9,7 +9,6 @@ use App\Domain\Task\ValueObjects\TaskStatus;
 use App\Domain\Organization\ValueObjects\OrganizationId;
 use App\Domain\Organization\ValueObjects\OrganizationUnitId;
 use App\Infrastructure\Persistence\Eloquent\Models\UserModel;
-use Illuminate\Support\Facades\Cache;
 
 class GetKanbanBoardUseCase
 {
@@ -21,26 +20,29 @@ class GetKanbanBoardUseCase
     {
         $userId = $params['user_id'];
         $organizationUnitId = $params['organization_unit_id'] ?? null;
+        $storeId = $params['store_id'] ?? null;
+        $hierarchyFilter = $params['hierarchy_filter'] ?? [];
         
         $user = UserModel::find($userId);
         if (!$user) {
             throw new \InvalidArgumentException('User not found');
         }
         
-        $cacheKey = "kanban_board:{$userId}:" . ($organizationUnitId ?: 'all');
+        // If store_id is provided, get tasks for that specific store
+        if ($storeId) {
+            return $this->getStoreTasksWithCounts($user, $organizationUnitId, $storeId);
+        }
         
-        return Cache::remember($cacheKey, 300, function () use ($user, $organizationUnitId) {
-            return $this->buildKanbanBoard($user, $organizationUnitId);
-        });
+        return $this->buildKanbanBoard($user, $organizationUnitId, $hierarchyFilter);
     }
     
-    private function buildKanbanBoard(UserModel $user, ?string $organizationUnitId): array
+    private function buildKanbanBoard(UserModel $user, ?string $organizationUnitId, array $hierarchyFilter): array
     {
         $statuses = ['TODO', 'IN_PROGRESS', 'IN_REVIEW', 'BLOCKED', 'DONE'];
         $board = [];
         
         foreach ($statuses as $status) {
-            $tasks = $this->getTasksForStatus($user, $status, $organizationUnitId);
+            $tasks = $this->getTasksForStatus($user, $status, $organizationUnitId, $hierarchyFilter);
             
             $board[$status] = [
                 'title' => $this->getStatusDisplayName($status),
@@ -52,15 +54,23 @@ class GetKanbanBoardUseCase
         return [
             'board' => $board,
             'user_permissions' => $this->getUserPermissions($user),
-            'statistics' => $this->getBoardStatistics($user, $organizationUnitId)
+            'statistics' => $this->getBoardStatistics($user, $organizationUnitId, $hierarchyFilter)
         ];
     }
     
-    private function getTasksForStatus(UserModel $user, string $status, ?string $organizationUnitId): array
+    private function getTasksForStatus(UserModel $user, string $status, ?string $organizationUnitId, array $hierarchyFilter): array
     {
         $taskStatus = new TaskStatus($status);
         
-        if ($organizationUnitId) {
+        // Use hierarchy filter if available
+        if (!empty($hierarchyFilter)) {
+            $tasks = $this->taskRepository->filterByHierarchy($hierarchyFilter);
+            
+            // Filter by status
+            $tasks = array_filter($tasks, function($task) use ($status) {
+                return $task->getStatus()->getValue() === $status;
+            });
+        } elseif ($organizationUnitId) {
             $unitId = new OrganizationUnitId($organizationUnitId);
             $tasks = $this->taskRepository->findByOrganizationUnit($unitId);
         } else {
@@ -118,7 +128,7 @@ class GetKanbanBoardUseCase
         ];
     }
     
-    private function getBoardStatistics(UserModel $user, ?string $organizationUnitId): array
+    private function getBoardStatistics(UserModel $user, ?string $organizationUnitId, array $hierarchyFilter): array
     {
         $orgId = new OrganizationId($user->organization_id);
         $statusCounts = $this->taskRepository->countByStatus($orgId);
@@ -142,5 +152,69 @@ class GetKanbanBoardUseCase
     {
         $position = $user->positions()->where('is_active', true)->first();
         return $position?->organization_unit_id;
+    }
+    
+    private function getStoreTasksWithCounts(UserModel $user, ?string $organizationUnitId, string $storeId): array
+    {
+        if (!$organizationUnitId) {
+            return [
+                'tasks' => [],
+                'counts' => [
+                    'TODO' => 0,
+                    'IN_PROGRESS' => 0,
+                    'IN_REVIEW' => 0,
+                    'BLOCKED' => 0,
+                    'DONE' => 0
+                ]
+            ];
+        }
+        
+        // Get all tasks for this organization unit
+        $unitId = new OrganizationUnitId($organizationUnitId);
+        $tasks = $this->taskRepository->findByOrganizationUnit($unitId);
+        
+        // Filter by user permissions
+        $filteredTasks = array_filter($tasks, function($task) use ($user) {
+            return $task->canBeViewedBy(
+                $user->hierarchy_role,
+                $user->organization_id,
+                $this->getUserOrganizationUnitId($user)
+            );
+        });
+        
+        // Group by status and count
+        $counts = [
+            'TODO' => 0,
+            'IN_PROGRESS' => 0,
+            'IN_REVIEW' => 0,
+            'BLOCKED' => 0,
+            'DONE' => 0
+        ];
+        
+        $tasksByStatus = [];
+        foreach ($filteredTasks as $task) {
+            $status = $task->getStatus()->getValue();
+            if (isset($counts[$status])) {
+                $counts[$status]++;
+            }
+            
+            $tasksByStatus[] = [
+                'id' => $task->getId()->getValue(),
+                'title' => $task->getTitle(),
+                'description' => substr($task->getDescription(), 0, 100) . '...',
+                'priority' => $task->getPriority()->getValue(),
+                'status' => $status,
+                'due_date' => $task->getDueDate()?->format('Y-m-d H:i:s'),
+                'is_overdue' => $task->isOverdue(),
+                'created_at' => $task->getCreatedAt()->format('Y-m-d H:i:s'),
+                'assignees' => array_map(fn($userId) => $userId->getValue(), $task->getAssignedUsers()),
+                'department_id' => $task->getDepartmentId()?->getValue()
+            ];
+        }
+        
+        return [
+            'tasks' => $tasksByStatus,
+            'counts' => $counts
+        ];
     }
 }

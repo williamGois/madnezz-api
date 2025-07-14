@@ -9,6 +9,7 @@ use App\Domain\Organization\Repositories\OrganizationRepositoryInterface;
 use App\Domain\User\Entities\HierarchicalUser;
 use App\Domain\User\Repositories\HierarchicalUserRepositoryInterface;
 use App\Domain\User\ValueObjects\HierarchyRole;
+use App\Http\Middleware\OrganizationContextMiddleware;
 
 class CreateOrganizationUseCase
 {
@@ -59,6 +60,9 @@ class CreateOrganizationUseCase
             );
 
             $this->userRepository->save($goUser);
+            
+            // Clear cache for the new GO user
+            OrganizationContextMiddleware::clearCacheForUser($goUser->getId()->toString());
         }
 
         return new CreateOrganizationResponse(

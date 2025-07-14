@@ -7,6 +7,7 @@ namespace App\Application\Store\UseCases;
 use App\Infrastructure\Persistence\Eloquent\Models\UserModel;
 use App\Infrastructure\Organization\Eloquent\OrganizationUnitModel;
 use Illuminate\Support\Facades\Cache;
+use App\Http\Middleware\OrganizationContextMiddleware;
 
 class AssignManagerUseCase
 {
@@ -33,8 +34,14 @@ class AssignManagerUseCase
         }
         
         // Se managerId for null, remove o gerente atual
+        $previousManagerId = $store->manager_id;
+        
         if ($managerId === null) {
             $store->update(['manager_id' => null]);
+            // Clear cache for previous manager if exists
+            if ($previousManagerId) {
+                OrganizationContextMiddleware::clearCacheForUser($previousManagerId);
+            }
         } else {
             // Verificar se o gerente existe e tem permissão para gerenciar lojas
             $manager = UserModel::find($managerId);
@@ -47,6 +54,12 @@ class AssignManagerUseCase
             }
             
             $store->update(['manager_id' => $managerId]);
+            
+            // Clear cache for both previous and new manager
+            if ($previousManagerId && $previousManagerId !== $managerId) {
+                OrganizationContextMiddleware::clearCacheForUser($previousManagerId);
+            }
+            OrganizationContextMiddleware::clearCacheForUser($managerId);
         }
         
         // Invalidar caches relacionados

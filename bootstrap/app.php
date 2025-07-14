@@ -24,6 +24,9 @@ return Application::configure(basePath: dirname(__DIR__))
             'jwt.auth' => \App\Http\Middleware\JwtMiddleware::class,
             'org.context' => \App\Http\Middleware\OrganizationContextMiddleware::class,
             'hierarchy.access' => \App\Http\Middleware\HierarchyAccessMiddleware::class,
+            'hierarchy.filter' => \App\Http\Middleware\HierarchyFilterMiddleware::class,
+            'cache.kanban' => \App\Http\Middleware\CacheKanbanMiddleware::class,
+            'visible.stores' => \App\Http\Middleware\VisibleStoresMiddleware::class,
         ]);
         
         

@@ -125,17 +125,27 @@ Route::prefix('v1')->group(function () {
             
         // Hierarchy and Statistics routes
         Route::get('/hierarchy', [HierarchyController::class, 'getHierarchy']);
+        Route::get('/hierarchy/me', [HierarchyController::class, 'getMyHierarchy'])
+            ->middleware(['org.context'])
+            ->name('hierarchy.me');
         Route::get('/hierarchy/statistics', [HierarchyController::class, 'getStatistics']);
         Route::get('/hierarchy/organization/{organizationId}', [HierarchyController::class, 'getOrganizationDetails']);
         Route::get('/hierarchy/region/{regionId}/stores', [HierarchyController::class, 'getStoresByRegion']);
         Route::get('/hierarchy/users', [HierarchyController::class, 'getUsersByHierarchy']);
         
         // Task Management (Kanban) routes
-        Route::get('/tasks', [TaskController::class, 'index']);
-        Route::get('/tasks/filtered', [TaskController::class, 'filtered']);
+        Route::middleware(['hierarchy.filter'])->group(function () {
+            Route::get('/tasks', [TaskController::class, 'index']);
+            Route::get('/tasks/filtered', [TaskController::class, 'filtered']);
+        });
+        
+        // Kanban route with full middleware chain
+        Route::get('/tasks/kanban', [TaskController::class, 'kanbanBoard'])
+            ->middleware(['org.context', 'hierarchy.filter', 'visible.stores', 'cache.kanban'])
+            ->name('tasks.kanban');
         Route::get('/tasks/filter-options', [TaskController::class, 'filterOptions']);
-        Route::get('/tasks/kanban', [TaskController::class, 'kanbanBoard']);
-        Route::post('/tasks', [TaskController::class, 'store']);
+        Route::post('/tasks', [TaskController::class, 'store'])
+            ->middleware(['org.context']);
         Route::get('/tasks/{id}', [TaskController::class, 'show']);
         Route::put('/tasks/{id}', [TaskController::class, 'update']);
         Route::delete('/tasks/{id}', [TaskController::class, 'destroy']);

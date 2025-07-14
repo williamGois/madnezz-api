@@ -114,13 +114,221 @@ MASTER (Super Admin) ← Você está aqui
                         └── Dashboard da loja
 ```
 
+### 📊 Detalhamento dos Papéis Hierárquicos
+
+#### 👑 **MASTER** (Administrador do Sistema)
+- **Escopo**: Sistema completo
+- **Permissões**: Acesso total sem restrições
+- **Responsabilidades**:
+  - Criar e gerenciar organizações
+  - Definir usuários GO para cada organização
+  - Monitorar todo o sistema
+  - Configurar parâmetros globais
+  - Context switching para qualquer nível
+- **Dashboards**: 
+  - Visão global de todas organizações
+  - Métricas consolidadas do sistema
+  - Logs de auditoria completos
+
+#### 🏢 **GO** (General Officer / Diretor Geral)
+- **Escopo**: Uma organização específica
+- **Permissões**: Controle total sobre sua organização
+- **Responsabilidades**:
+  - Criar e gerenciar regiões
+  - Definir usuários GR para cada região
+  - Criar lojas e atribuí-las a regiões
+  - Gerenciar políticas organizacionais
+  - Context switching para GR ou Store Manager de sua organização
+- **Dashboards**:
+  - Visão completa da organização
+  - Performance por região
+  - Métricas consolidadas de todas as lojas
+
+#### 🌎 **GR** (Regional Manager / Gerente Regional)
+- **Escopo**: Uma região específica dentro da organização
+- **Permissões**: Controle sobre lojas de sua região
+- **Responsabilidades**:
+  - Supervisionar lojas da região
+  - Criar e gerenciar Store Managers
+  - Implementar estratégias regionais
+  - Monitorar performance das lojas
+  - Context switching para Store Manager de sua região
+- **Dashboards**:
+  - Visão regional consolidada
+  - Comparativo entre lojas
+  - Indicadores de performance regional
+
+#### 🏪 **STORE_MANAGER** (Gerente de Loja)
+- **Escopo**: Uma loja específica
+- **Permissões**: Controle operacional da loja
+- **Responsabilidades**:
+  - Gerenciar operações diárias
+  - Coordenar equipe da loja
+  - Executar tarefas operacionais
+  - Reportar para o GR
+- **Dashboards**:
+  - Métricas da loja
+  - Performance da equipe
+  - Indicadores operacionais
+
+## 🔄 Context Switching (Mudança de Contexto)
+
+O MASTER pode assumir o papel de qualquer usuário para testar funcionalidades:
+
+### Exemplo de API para Context Switching:
+```bash
+# Assumir papel de GO
+POST /api/v1/users/switch-context
+{
+  "target_role": "GO",
+  "organization_id": "uuid-da-organizacao"
+}
+
+# Assumir papel de GR
+POST /api/v1/users/switch-context
+{
+  "target_role": "GR",
+  "organization_id": "uuid-da-organizacao",
+  "region_id": "uuid-da-regiao"
+}
+
+# Assumir papel de Store Manager
+POST /api/v1/users/switch-context
+{
+  "target_role": "STORE_MANAGER",
+  "store_id": "uuid-da-loja"
+}
+
+# Voltar ao contexto MASTER
+POST /api/v1/users/switch-context
+{
+  "target_role": "MASTER"
+}
+```
+
+## 🛠️ APIs Principais por Papel
+
+### MASTER APIs:
+```bash
+# Criar Organização
+POST /api/v1/organizations
+{
+  "name": "Madnezz Brasil",
+  "code": "BR001"
+}
+
+# Criar usuário GO
+POST /api/v1/users
+{
+  "name": "João Silva",
+  "email": "joao.silva@madnezz.com",
+  "hierarchy_role": "GO",
+  "organization_id": "uuid-organizacao"
+}
+
+# Listar todas organizações
+GET /api/v1/organizations
+
+# Dashboard global
+GET /api/v1/dashboard/master
+```
+
+### GO APIs:
+```bash
+# Criar Região
+POST /api/v1/regions
+{
+  "name": "Região Sul",
+  "organization_id": "uuid-organizacao"
+}
+
+# Criar usuário GR
+POST /api/v1/users
+{
+  "name": "Maria Santos",
+  "email": "maria.santos@madnezz.com",
+  "hierarchy_role": "GR",
+  "organization_id": "uuid-organizacao",
+  "region_id": "uuid-regiao"
+}
+
+# Criar Loja
+POST /api/v1/stores
+{
+  "name": "Loja Centro SP",
+  "code": "SP001",
+  "region_id": "uuid-regiao"
+}
+```
+
+### GR APIs:
+```bash
+# Criar Store Manager
+POST /api/v1/users
+{
+  "name": "Pedro Costa",
+  "email": "pedro.costa@madnezz.com",
+  "hierarchy_role": "STORE_MANAGER",
+  "store_id": "uuid-loja"
+}
+
+# Listar lojas da região
+GET /api/v1/stores?region_id=uuid-regiao
+
+# Dashboard regional
+GET /api/v1/dashboard/regional/{region_id}
+```
+
 ## 🚀 Próximos Passos
 
 1. **Fazer Login** com as credenciais acima
+   ```bash
+   POST /api/v1/auth/login
+   {
+     "email": "master@madnezz.com",
+     "password": "Master@123"
+   }
+   ```
+
 2. **Criar uma Organização** de teste
+   - Use a API de criação de organização
+   - Defina nome e código únicos
+
 3. **Criar um usuário GO** para a organização
+   - Associe o GO à organização criada
+   - Defina permissões organizacionais
+
 4. **Testar Context Switching** assumindo o papel do GO
-5. **Criar Lojas** e **Store Managers**
+   - Use a API de switch-context
+   - Verifique que as permissões mudaram
+
+5. **Criar Regiões, Lojas** e **Store Managers**
+   - Como GO, crie regiões
+   - Como GO ou GR, crie lojas
+   - Como GR, crie Store Managers
+
+## 📊 Fluxo de Criação Hierárquica
+
+```
+1. MASTER cria Organização
+   ↓
+2. MASTER cria GO para a Organização
+   ↓
+3. GO cria Regiões
+   ↓
+4. GO cria GRs para as Regiões
+   ↓
+5. GO/GR criam Lojas
+   ↓
+6. GR cria Store Managers para as Lojas
+```
+
+## 🔍 Validações Importantes
+
+- **GO** só pode ser criado pelo MASTER
+- **GR** só pode ser criado por GO da mesma organização
+- **Store Manager** só pode ser criado por GR da mesma região
+- **Context Switching** respeita a hierarquia (não pode assumir papel superior)
 
 ## 📝 Observações Importantes
 
@@ -128,3 +336,5 @@ MASTER (Super Admin) ← Você está aqui
 - 🔒 **Backup**: Faça backup das credenciais MASTER
 - 🧪 **Testes**: Use o Context Switching para testar todos os níveis
 - 📋 **Logs**: Todas as ações do MASTER são registradas no sistema
+- 🔐 **Tokens JWT**: Incluem informações de hierarquia e contexto atual
+- 📡 **Headers**: Após context switch, use o header `X-Context-Role` nas requisições

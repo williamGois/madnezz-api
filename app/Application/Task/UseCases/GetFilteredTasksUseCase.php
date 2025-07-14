@@ -34,7 +34,7 @@ class GetFilteredTasksUseCase
         $cacheKey = $this->generateCacheKey($user, $filters, $pagination, $view);
         $ttl = $this->calculateCacheTTL($cacheKey);
         
-        return Cache::tags(['tasks', 'filtered-tasks'])->remember($cacheKey, $ttl, function () use ($user, $filters, $pagination, $view) {
+        return Cache::tags(['tasks', 'kanban'])->remember($cacheKey, $ttl, function () use ($user, $filters, $pagination, $view) {
             if ($view === 'kanban') {
                 return $this->buildKanbanView($user, $filters);
             }

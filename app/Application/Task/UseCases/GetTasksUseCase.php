@@ -41,7 +41,35 @@ class GetTasksUseCase
             return $this->formatTask($task);
         }
         
-        // Get tasks based on filters
+        // If hierarchy filter is provided, use it for filtering
+        if (isset($params['hierarchy_filter']) && !empty($params['hierarchy_filter'])) {
+            $tasks = $this->taskRepository->filterByHierarchy($params['hierarchy_filter']);
+            
+            // Apply additional filters if specified
+            if ($params['assigned_to_me'] ?? false) {
+                $tasks = array_filter($tasks, function($task) use ($userId) {
+                    $assignedUserIds = array_map(fn($uid) => $uid->getValue(), $task->getAssignedUsers());
+                    return in_array($userId, $assignedUserIds);
+                });
+            }
+            
+            if ($params['created_by_me'] ?? false) {
+                $tasks = array_filter($tasks, function($task) use ($userId) {
+                    return $task->getCreatedBy()->getValue() === $userId;
+                });
+            }
+            
+            if ($params['status'] ?? null) {
+                $status = $params['status'];
+                $tasks = array_filter($tasks, function($task) use ($status) {
+                    return $task->getStatus()->getValue() === $status;
+                });
+            }
+            
+            return array_map([$this, 'formatTask'], $tasks);
+        }
+        
+        // Fallback to original logic if no hierarchy filter
         if ($params['assigned_to_me'] ?? false) {
             $tasks = $this->taskRepository->findByAssignedUser(new UserId($userId));
         } elseif ($params['created_by_me'] ?? false) {
@@ -77,6 +105,7 @@ class GetTasksUseCase
             'created_by' => $task->getCreatedBy()->getValue(),
             'organization_id' => $task->getOrganizationId()->getValue(),
             'organization_unit_id' => $task->getOrganizationUnitId()?->getValue(),
+            'department_id' => $task->getDepartmentId()?->getValue(),
             'parent_task_id' => $task->getParentTaskId()?->getValue(),
             'due_date' => $task->getDueDate()?->format('Y-m-d H:i:s'),
             'completed_at' => $task->getCompletedAt()?->format('Y-m-d H:i:s'),

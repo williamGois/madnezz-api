@@ -7,6 +7,7 @@ namespace App\Application\Task\UseCases;
 use App\Domain\Task\Repositories\TaskRepositoryInterface;
 use App\Domain\Task\ValueObjects\TaskId;
 use App\Infrastructure\Persistence\Eloquent\Models\UserModel;
+use Illuminate\Support\Facades\Cache;
 
 class DeleteTaskUseCase
 {
@@ -47,6 +48,9 @@ class DeleteTaskUseCase
         }
         
         $this->taskRepository->delete($taskId);
+        
+        // Invalidar cache após deletar tarefa
+        Cache::tags(['tasks'])->flush();
     }
     
     private function getUserOrganizationUnitId(UserModel $user): ?int

@@ -25,6 +25,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
+use App\Http\Middleware\OrganizationContextMiddleware;
 
 class RegionController extends BaseController
 {
@@ -294,6 +295,9 @@ class RegionController extends BaseController
                 'GR'
             );
             $this->positionRepository->save($position);
+
+            // Clear cache for the new GR user
+            OrganizationContextMiddleware::clearCacheForUser($grUser->getId()->toString());
 
             DB::commit();
 

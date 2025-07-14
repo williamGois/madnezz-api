@@ -33,13 +33,17 @@ class TaskController extends Controller
     {
         try {
             $user = Auth::user();
+            $hierarchyFilter = $request->get('hierarchy_filter', []);
             
-            $tasks = $this->getTasksUseCase->execute([
+            $params = [
                 'user_id' => $user->id,
                 'status' => $request->get('status'),
                 'assigned_to_me' => $request->boolean('assigned_to_me'),
-                'created_by_me' => $request->boolean('created_by_me')
-            ]);
+                'created_by_me' => $request->boolean('created_by_me'),
+                'hierarchy_filter' => $hierarchyFilter
+            ];
+            
+            $tasks = $this->getTasksUseCase->execute($params);
             
             return response()->json([
                 'success' => true,
@@ -60,15 +64,60 @@ class TaskController extends Controller
     {
         try {
             $user = Auth::user();
+            $visibleStoreIds = $request->attributes->get('visible_store_ids', []);
             
-            $board = $this->getKanbanBoardUseCase->execute([
-                'user_id' => $user->id,
-                'organization_unit_id' => $request->get('organization_unit_id')
-            ]);
+            // Build board data for each visible store
+            $board = [];
+            
+            foreach ($visibleStoreIds as $storeId) {
+                // Get store information
+                $store = \DB::table('stores')->find($storeId);
+                if (!$store) {
+                    continue;
+                }
+                
+                // Get organization unit for this store
+                $storeUnit = \DB::table('organization_units')
+                    ->where('organization_id', $store->organization_id)
+                    ->where('code', $store->code)
+                    ->where('type', 'store')
+                    ->first();
+                
+                if (!$storeUnit) {
+                    continue;
+                }
+                
+                // Get tasks for this store
+                $params = [
+                    'user_id' => $user->id,
+                    'organization_unit_id' => $storeUnit->id,
+                    'store_id' => $storeId
+                ];
+                
+                $storeTasks = $this->getKanbanBoardUseCase->execute($params);
+                
+                // Add store column to board
+                $board[] = [
+                    'store_id' => $storeId,
+                    'store_name' => $store->name,
+                    'store_code' => $store->code,
+                    'tasks' => $storeTasks['tasks'] ?? [],
+                    'counts' => $storeTasks['counts'] ?? [
+                        'TODO' => 0,
+                        'IN_PROGRESS' => 0,
+                        'IN_REVIEW' => 0,
+                        'BLOCKED' => 0,
+                        'DONE' => 0
+                    ]
+                ];
+            }
             
             return response()->json([
                 'success' => true,
-                'data' => $board
+                'data' => [
+                    'board' => $board,
+                    'total_stores' => count($board)
+                ]
             ]);
         } catch (\Exception $e) {
             return response()->json([
@@ -89,6 +138,7 @@ class TaskController extends Controller
                 'description' => 'required|string',
                 'priority' => 'required|in:LOW,MEDIUM,HIGH,URGENT',
                 'organization_unit_id' => 'nullable|exists:organization_units,id',
+                'department_id' => 'nullable|exists:departments,id',
                 'parent_task_id' => 'nullable|exists:tasks,id',
                 'due_date' => 'nullable|date',
                 'assigned_users' => 'nullable|array',
@@ -96,6 +146,7 @@ class TaskController extends Controller
             ]);
             
             $user = Auth::user();
+            $orgContext = $request->get('organization_context');
             
             $task = $this->createTaskUseCase->execute([
                 'title' => $request->title,
@@ -104,9 +155,11 @@ class TaskController extends Controller
                 'created_by' => $user->id,
                 'organization_id' => $user->organization_id,
                 'organization_unit_id' => $request->organization_unit_id,
+                'department_id' => $request->department_id,
                 'parent_task_id' => $request->parent_task_id,
                 'due_date' => $request->due_date,
-                'assigned_users' => $request->assigned_users ?? []
+                'assigned_users' => $request->assigned_users ?? [],
+                'organization_context' => $orgContext
             ]);
             
             return response()->json([
@@ -225,9 +278,11 @@ class TaskController extends Controller
     {
         try {
             $user = Auth::user();
+            $hierarchyFilter = $request->get('hierarchy_filter', []);
             
             $params = array_merge($request->all(), [
-                'user_id' => $user->id
+                'user_id' => $user->id,
+                'hierarchy_filter' => $hierarchyFilter
             ]);
             
             $result = $this->getFilteredTasksUseCase->execute($params);

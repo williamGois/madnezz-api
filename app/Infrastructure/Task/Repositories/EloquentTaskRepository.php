@@ -13,6 +13,7 @@ use App\Domain\Organization\ValueObjects\OrganizationUnitId;
 use App\Domain\User\ValueObjects\UserId;
 use App\Infrastructure\Task\Eloquent\TaskModel;
 use App\Infrastructure\Task\Mappers\TaskMapper;
+use Illuminate\Support\Facades\DB;
 
 class EloquentTaskRepository implements TaskRepositoryInterface
 {
@@ -121,9 +122,48 @@ class EloquentTaskRepository implements TaskRepositoryInterface
     public function countByStatus(OrganizationId $organizationId): array
     {
         return TaskModel::byOrganization($organizationId->getValue())
-            ->select('status', \DB::raw('count(*) as total'))
+            ->select('status', DB::raw('count(*) as total'))
             ->groupBy('status')
             ->pluck('total', 'status')
             ->toArray();
+    }
+    
+    public function filterByHierarchy(array $hierarchyFilter): array
+    {
+        $query = TaskModel::with(['assignees', 'subtasks']);
+        
+        if (empty($hierarchyFilter['filters'])) {
+            // MASTER user - no filters
+            $models = $query->orderBy('created_at', 'desc')->get();
+        } else {
+            $filters = $hierarchyFilter['filters'];
+            
+            // Apply organization filter
+            if (isset($filters['organization_id'])) {
+                $query->byOrganization($filters['organization_id']);
+            }
+            
+            // Apply organization unit filter
+            if (isset($filters['organization_unit_id'])) {
+                if (isset($filters['include_child_units']) && $filters['include_child_units']) {
+                    // For GR - include the region and all child units (stores)
+                    $unitIds = $filters['all_unit_ids'] ?? [$filters['organization_unit_id']];
+                    $query->whereIn('organization_unit_id', $unitIds);
+                } else {
+                    // For Store Manager - only their specific unit
+                    $query->where('organization_unit_id', $filters['organization_unit_id']);
+                }
+            }
+            
+            // Apply store filter if present
+            if (isset($filters['store_id'])) {
+                // Additional filter for store-specific tasks
+                $query->where('store_id', $filters['store_id']);
+            }
+            
+            $models = $query->orderBy('created_at', 'desc')->get();
+        }
+        
+        return $models->map(fn($model) => TaskMapper::toDomain($model))->toArray();
     }
 }

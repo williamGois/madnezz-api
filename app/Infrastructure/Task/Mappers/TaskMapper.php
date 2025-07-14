@@ -11,6 +11,7 @@ use App\Domain\Task\ValueObjects\TaskPriority;
 use App\Domain\User\ValueObjects\UserId;
 use App\Domain\Organization\ValueObjects\OrganizationId;
 use App\Domain\Organization\ValueObjects\OrganizationUnitId;
+use App\Domain\Organization\ValueObjects\DepartmentId;
 use App\Infrastructure\Task\Eloquent\TaskModel;
 use DateTime;
 
@@ -27,6 +28,7 @@ class TaskMapper
             new UserId($model->created_by),
             new OrganizationId($model->organization_id),
             $model->organization_unit_id ? new OrganizationUnitId($model->organization_unit_id) : null,
+            $model->department_id ? new DepartmentId($model->department_id) : null,
             $model->parent_task_id ? new TaskId($model->parent_task_id) : null,
             $model->due_date ? new DateTime($model->due_date) : null,
             new DateTime($model->created_at),
@@ -54,6 +56,7 @@ class TaskMapper
             'created_by' => $task->getCreatedBy()->getValue(),
             'organization_id' => $task->getOrganizationId()->getValue(),
             'organization_unit_id' => $task->getOrganizationUnitId()?->getValue(),
+            'department_id' => $task->getDepartmentId()?->getValue(),
             'parent_task_id' => $task->getParentTaskId()?->getValue(),
             'due_date' => $task->getDueDate()?->format('Y-m-d H:i:s'),
             'completed_at' => $task->getCompletedAt()?->format('Y-m-d H:i:s'),

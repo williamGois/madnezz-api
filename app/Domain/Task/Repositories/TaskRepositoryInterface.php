@@ -34,4 +34,12 @@ interface TaskRepositoryInterface
     public function findOverdueTasks(?OrganizationId $organizationId = null): array;
     
     public function countByStatus(OrganizationId $organizationId): array;
+    
+    /**
+     * Filter tasks by hierarchy
+     * 
+     * @param array $hierarchyFilter Contains filters based on user role
+     * @return array
+     */
+    public function filterByHierarchy(array $hierarchyFilter): array;
 }

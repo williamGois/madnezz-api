@@ -10,6 +10,7 @@ use App\Domain\Task\ValueObjects\TaskPriority;
 use App\Domain\User\ValueObjects\UserId;
 use App\Domain\Organization\ValueObjects\OrganizationId;
 use App\Domain\Organization\ValueObjects\OrganizationUnitId;
+use App\Domain\Organization\ValueObjects\DepartmentId;
 use DateTime;
 
 class Task
@@ -29,6 +30,7 @@ class Task
         private UserId $createdBy,
         private OrganizationId $organizationId,
         private ?OrganizationUnitId $organizationUnitId,
+        private ?DepartmentId $departmentId,
         private ?TaskId $parentTaskId,
         private ?DateTime $dueDate,
         private DateTime $createdAt,
@@ -73,6 +75,11 @@ class Task
     public function getOrganizationUnitId(): ?OrganizationUnitId
     {
         return $this->organizationUnitId;
+    }
+
+    public function getDepartmentId(): ?DepartmentId
+    {
+        return $this->departmentId;
     }
 
     public function getParentTaskId(): ?TaskId
